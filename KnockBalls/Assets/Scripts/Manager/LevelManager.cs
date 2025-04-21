@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Gameplay;
 using UnityEngine;
+using Object = System.Object;
 
 namespace Manager
 {
@@ -72,6 +73,8 @@ namespace Manager
         {
             _levelEnded = true;
             
+            ObjectPooling.Instance.ReturnAllActiveObjects();
+            
             bool hasNext = levelSpawner.SpawnNext();
             if (hasNext)
                 PrepareNextPhase();
@@ -82,6 +85,9 @@ namespace Manager
         private void HandleLose()
         {
             _levelEnded = true;
+            
+            ObjectPooling.Instance.ReturnAllActiveObjects();
+            
             Debug.Log("💥 LEVEL FAILED!");
         }
 

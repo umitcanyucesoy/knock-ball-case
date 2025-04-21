@@ -1,4 +1,5 @@
 using System;
+using Manager;
 using UnityEngine;
 
 namespace Gameplay
@@ -9,10 +10,14 @@ namespace Gameplay
         [SerializeField] private ProjectileBall ballPrefab;
         [SerializeField] private Transform ballSpawnPoint;
 
-        [SerializeField] private float projectileSpeed;
-
         [Header("Settings")] 
         [SerializeField] private float minHeightCompens;
+        [SerializeField] private float projectileSpeed;
+
+        [Header("Angle Limits")] 
+        [SerializeField] private float inclineAngleDeg = 5f;
+
+        public static event Action<int, int> OnBallCountChanged; 
 
         private Camera _mainCamera;
         private int _totalBallCount;
@@ -43,35 +48,25 @@ namespace Gameplay
 
         private void ShootBall(Vector3 target)
         {
-            ProjectileBall ball = Instantiate(ballPrefab, ballSpawnPoint.position, Quaternion.identity);
+            ProjectileBall ball = ObjectPooling.Instance.GetPoolObject();
+            ball.Prepare(ballSpawnPoint.position, Quaternion.identity);
 
-            Vector3  displacement   = target - ballSpawnPoint.position;     
-            Vector3  displacementXZ = new Vector3(displacement.x, 0, displacement.z);
-            float    distXZ         = displacementXZ.magnitude;                 
-            float    yOffset        = displacement.y;                          
-            float    g              = Mathf.Abs(Physics.gravity.y);           
-            
-            if (distXZ < 1f) yOffset += minHeightCompens;
+            Vector3 dir = (target - ballSpawnPoint.position).normalized;
 
-            float speed = projectileSpeed;                                    
-            float speed2 = speed * speed;
-            float speed4 = speed2 * speed2;
-            
-            float root = speed4 - g * (g * distXZ * distXZ + 2 * yOffset * speed2);
-            if (root < 0f) root = 0f;                                         
+            Vector3 axis = Vector3.Cross(dir, Vector3.up);
+            if (axis.sqrMagnitude < 0.001f)
+                axis = Vector3.right;
 
-            float sqrtRoot = Mathf.Sqrt(root);
-            
-            float tanTheta = (speed2 - sqrtRoot) / (g * distXZ);
-            float angle    = Mathf.Atan(tanTheta);                             
-            
-            Vector3 velocity =
-                displacementXZ.normalized * (speed * Mathf.Cos(angle))        
-                + Vector3.up * (speed * Mathf.Sin(angle));                         
+            Quaternion tilt = Quaternion.AngleAxis(inclineAngleDeg, axis);
+            Vector3 tiltedDir = tilt * dir;
 
+            Vector3 velocity = tiltedDir * projectileSpeed;
             ball.Shoot(velocity);
+
             _currentBallCount--;
+            OnBallCountChanged?.Invoke(_currentBallCount, _totalBallCount);
         }
+
 
         public int GetRemainingBallCount()
         {
@@ -82,17 +77,14 @@ namespace Gameplay
         {
             _totalBallCount = count;
             _currentBallCount = count;
+            
+            OnBallCountChanged?.Invoke(_currentBallCount, _totalBallCount);
         }
 
         Vector3 GetMouseWorldPoint()
         {
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
             return Physics.Raycast(ray, out var hit) ? hit.point : ray.GetPoint(500f);
-        }
-
-        public void ResetBalls()
-        {
-            _currentBallCount = _totalBallCount;
         }
     }
 }
