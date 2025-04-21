@@ -23,3 +23,17 @@ MonoBehaviour:
     - prefab: {fileID: 6731194493083257657, guid: 94de334453de97f42bc2ef99dd17bdd5, type: 3}
       spawnPointObject: {fileID: 1014615178005332544, guid: 2eb04c715aede654e96bd0cbecf6535a, type: 3}
     totalBallCount: 5
+  - levelName: Level 1-3
+    levelObjects:
+    - prefab: {fileID: 1090068855239909585, guid: 0ac11e8df61fdb849875dcf399dc231c, type: 3}
+      spawnPointObject: {fileID: 3492079535648325560, guid: eb428e526e2234a41bf28a3885ed1456, type: 3}
+    - prefab: {fileID: 1090068855239909585, guid: 0ac11e8df61fdb849875dcf399dc231c, type: 3}
+      spawnPointObject: {fileID: 945031679378316753, guid: 5a28ee581a62f96498f709869b0bf22d, type: 3}
+    totalBallCount: 9
+  - levelName: Level 2
+    levelObjects:
+    - prefab: {fileID: 1232159118791321202, guid: d9cfd02e8223c5e44b50dacf95c864fd, type: 3}
+      spawnPointObject: {fileID: 3492079535648325560, guid: eb428e526e2234a41bf28a3885ed1456, type: 3}
+    - prefab: {fileID: 1232159118791321202, guid: d9cfd02e8223c5e44b50dacf95c864fd, type: 3}
+      spawnPointObject: {fileID: 945031679378316753, guid: 5a28ee581a62f96498f709869b0bf22d, type: 3}
+    totalBallCount: 11

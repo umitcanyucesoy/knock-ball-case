@@ -17,6 +17,9 @@ namespace Manager
         private int _blocksRemaining;
         private bool _levelEnded;
         private float _ballEndTimer;
+        private int _phaseIndex;
+        
+        public static event Action<int> OnPhaseIndexChanged;
         
         private void Awake()
         {
@@ -29,7 +32,9 @@ namespace Manager
 
         private void Start()
         {
+            _phaseIndex = 0;
             levelSpawner.SpawnFirst();
+            OnPhaseIndexChanged?.Invoke(_phaseIndex);
             
             int totalBalls = levelSpawner.GetCurrentTotalBallCount();
             shooterController.SetTotalBallCount(totalBalls);
@@ -77,8 +82,13 @@ namespace Manager
             
             bool hasNext = levelSpawner.SpawnNext();
             if (hasNext)
+            {
+                _phaseIndex++;
+                OnPhaseIndexChanged?.Invoke(_phaseIndex);
+                
                 PrepareNextPhase();
-            
+            }
+
             Debug.Log("🎉 LEVEL COMPLETED!");
         }
 

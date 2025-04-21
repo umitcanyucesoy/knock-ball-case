@@ -66,8 +66,7 @@ namespace Gameplay
             _currentBallCount--;
             OnBallCountChanged?.Invoke(_currentBallCount, _totalBallCount);
         }
-
-
+        
         public int GetRemainingBallCount()
         {
             return _currentBallCount;
