@@ -9,12 +9,13 @@ namespace Gameplay
         [SerializeField] private ProjectileBall ballPrefab;
         [SerializeField] private Transform ballSpawnPoint;
 
+        [SerializeField] private float projectileSpeed;
+
         [Header("Settings")] 
-        [SerializeField] private int totalBallCount;
-        [SerializeField] private float projectileSpeed;  
         [SerializeField] private float minHeightCompens;
-        
+
         private Camera _mainCamera;
+        private int _totalBallCount;
         private int _currentBallCount;
 
         private void Awake()
@@ -23,7 +24,7 @@ namespace Gameplay
             if (!_mainCamera)
                 Debug.LogError("No main camera!");
 
-            _currentBallCount = totalBallCount;
+            _currentBallCount = _totalBallCount;
         }
 
         private void Update()
@@ -76,11 +77,22 @@ namespace Gameplay
         {
             return _currentBallCount;
         }
+        
+        public void SetTotalBallCount(int count)
+        {
+            _totalBallCount = count;
+            _currentBallCount = count;
+        }
 
         Vector3 GetMouseWorldPoint()
         {
             Ray ray = _mainCamera.ScreenPointToRay(Input.mousePosition);
             return Physics.Raycast(ray, out var hit) ? hit.point : ray.GetPoint(500f);
+        }
+
+        public void ResetBalls()
+        {
+            _currentBallCount = _totalBallCount;
         }
     }
 }

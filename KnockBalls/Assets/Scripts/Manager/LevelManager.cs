@@ -10,6 +10,7 @@ namespace Manager
     {
         [Header("Elements")]
         [SerializeField] private BallShooterController shooterController;
+        [SerializeField] private LevelSpawner levelSpawner;
         [SerializeField] private float waitAfterBalls = 2f;
 
         private int _blocksRemaining;
@@ -18,9 +19,19 @@ namespace Manager
         
         private void Awake()
         {
-            _blocksRemaining = PhysicalBlock.ActiveCount;
             PhysicalBlock.BlockSpawned += OnBlockSpawned;
             PhysicalBlock.BlockFallen += OnBlockFallen;
+            
+            _levelEnded = false;
+            _blocksRemaining = PhysicalBlock.ActiveCount;
+        }
+
+        private void Start()
+        {
+            levelSpawner.SpawnFirst();
+            
+            int totalBalls = levelSpawner.GetCurrentTotalBallCount();
+            shooterController.SetTotalBallCount(totalBalls);
         }
 
         private void OnBlockSpawned()
@@ -35,7 +46,7 @@ namespace Manager
             _blocksRemaining--;
 
             if (_blocksRemaining <= 0)
-                NextPhase();
+                HandleWin();
         }
 
         private void Update()
@@ -51,22 +62,38 @@ namespace Manager
             { 
                 _ballEndTimer += Time.deltaTime;
                 if (_ballEndTimer >= waitAfterBalls)
-                    LosePhase();
+                    HandleLose();
             }
             else
                 _ballEndTimer = 0f;
         }
 
-        private void NextPhase()
+        private void HandleWin()
         {
             _levelEnded = true;
+            
+            bool hasNext = levelSpawner.SpawnNext();
+            if (hasNext)
+                PrepareNextPhase();
+            
             Debug.Log("🎉 LEVEL COMPLETED!");
         }
 
-        private void LosePhase()
+        private void HandleLose()
         {
             _levelEnded = true;
             Debug.Log("💥 LEVEL FAILED!");
+        }
+
+        private void PrepareNextPhase()
+        {
+            _blocksRemaining = PhysicalBlock.ActiveCount;
+
+            int totalBalls = levelSpawner.GetCurrentTotalBallCount();
+            shooterController.SetTotalBallCount(totalBalls);
+            
+            _ballEndTimer = 0f;
+            _levelEnded   = false;
         }
     }
 }

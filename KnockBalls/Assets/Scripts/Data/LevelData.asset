@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6401cc4cca940118b44a22b7b11e586, type: 3}
+  m_Name: LevelData
+  m_EditorClassIdentifier: 
+  levels:
+  - levelName: Level 1-1
+    levelObjects:
+    - prefab: {fileID: 4157253364284335609, guid: 729e3ae733b81c540a219ffd74d7d3c5, type: 3}
+      spawnPointObject: {fileID: 1014615178005332544, guid: 2eb04c715aede654e96bd0cbecf6535a, type: 3}
+    totalBallCount: 4
+  - levelName: Level 1-2
+    levelObjects:
+    - prefab: {fileID: 6731194493083257657, guid: 94de334453de97f42bc2ef99dd17bdd5, type: 3}
+      spawnPointObject: {fileID: 1014615178005332544, guid: 2eb04c715aede654e96bd0cbecf6535a, type: 3}
+    totalBallCount: 5

@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5096697016069336431}
   - component: {fileID: 582321664394582022}
   - component: {fileID: 2639290417643242359}
+  - component: {fileID: 7113958108171339648}
   m_Layer: 0
   m_Name: Target Rectangle
   m_TagString: Untagged
@@ -119,9 +120,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6aa3dc46756a4196ab78146f0ace72d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  impactVelocity: 1
-  fallVelocityLimit: 0.2
-  stableTime: 1.5
 --- !u!54 &2639290417643242359
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -148,4 +146,17 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
+--- !u!114 &7113958108171339648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7931203464114990012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd479c70a437485785006b9cea84f621, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activateImpulse: 1
