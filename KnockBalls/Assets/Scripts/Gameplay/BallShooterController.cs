@@ -17,7 +17,8 @@ namespace Gameplay
         [Header("Angle Limits")] 
         [SerializeField] private float inclineAngleDeg = 5f;
 
-        public static event Action<int, int> OnBallCountChanged; 
+        public static event Action<int, int> OnBallCountChanged;
+        public static event Action<Vector3> OnCannonAim;
 
         private Camera _mainCamera;
         private int _totalBallCount;
@@ -42,6 +43,7 @@ namespace Gameplay
             if (Input.GetMouseButtonDown(0) && _currentBallCount > 0)
             {
                 Vector3 targetPoint = GetMouseWorldPoint();
+                OnCannonAim?.Invoke(targetPoint);
                 ShootBall(targetPoint);
             }    
         }

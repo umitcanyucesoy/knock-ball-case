@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Gameplay;
 using UnityEngine;
 using Object = System.Object;
@@ -20,6 +21,7 @@ namespace Manager
         private int _phaseIndex;
         
         public static event Action<int> OnPhaseIndexChanged;
+        public static event Action<int> OnPhaseTransitionText;
         
         private void Awake()
         {
@@ -52,7 +54,7 @@ namespace Manager
             _blocksRemaining--;
 
             if (_blocksRemaining <= 0)
-                HandleWin();
+                HandleWin().Forget();
         }
 
         private void Update()
@@ -74,9 +76,13 @@ namespace Manager
                 _ballEndTimer = 0f;
         }
 
-        private void HandleWin()
+        private async UniTask HandleWin()
         {
             _levelEnded = true;
+            
+            OnPhaseTransitionText?.Invoke(_phaseIndex);
+            
+            await UniTask.Delay(TimeSpan.FromSeconds(3f));
             
             ObjectPooling.Instance.ReturnAllActiveObjects();
             
@@ -88,13 +94,13 @@ namespace Manager
                 
                 PrepareNextPhase();
             }
-
-            Debug.Log("🎉 LEVEL COMPLETED!");
         }
 
         private void HandleLose()
         {
             _levelEnded = true;
+            
+            OnPhaseTransitionText?.Invoke(_phaseIndex);
             
             ObjectPooling.Instance.ReturnAllActiveObjects();
             
