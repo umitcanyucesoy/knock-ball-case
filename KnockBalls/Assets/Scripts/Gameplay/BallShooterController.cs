@@ -1,6 +1,7 @@
 using System;
 using Manager;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Gameplay
 {
@@ -40,6 +41,8 @@ namespace Gameplay
 
         private void HandleInput()
         {
+            if (UIManager.Instance && UIManager.Instance.IsOverlayActive) return;
+            
             if (Input.GetMouseButtonDown(0) && _currentBallCount > 0)
             {
                 Vector3 targetPoint = GetMouseWorldPoint();

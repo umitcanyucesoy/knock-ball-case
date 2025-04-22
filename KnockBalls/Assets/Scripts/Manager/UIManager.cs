@@ -1,4 +1,3 @@
-using System;
 using DG.Tweening;
 using Gameplay;
 using TMPro;
@@ -9,108 +8,127 @@ namespace Manager
 {
     public class UIManager : MonoBehaviour
     {
-        [Header("Level‑Progress UI")]
-        [SerializeField] private Image[] levelSquares;          
-        [SerializeField] private TextMeshProUGUI startLevelText; 
-        [SerializeField] private TextMeshProUGUI endLevelText;
-        [SerializeField] private TextMeshProUGUI totalBallCountText;
-        //[SerializeField] private GameObject levelCompleteUI;
+        public static UIManager Instance { get; private set; }
         
+        [Header("Level‑Progress UI")]
+        [SerializeField] private Image[] levelSquares;
+        [SerializeField] private TextMeshProUGUI  startLevelText;
+        [SerializeField] private TextMeshProUGUI  endLevelText;
+        [SerializeField] private TextMeshProUGUI  totalBallCountText;
+
         [Header("State Colors")]
-        [SerializeField] private Color[] stateColors = new Color[3]
+        [SerializeField] private Color[] stateColors =
         {
-            Color.green, 
-            Color.yellow,
-            Color.gray
+            Color.green, Color.yellow, Color.gray
         };
 
         [Header("Phase Messages")]
         [SerializeField] private GameObject phaseMessageContainer;
         [SerializeField] private TextMeshProUGUI phaseMessageText;
-        [SerializeField] private string[] phaseMessages = new string[3]
-        {
-            "Awesome!",
-            "Good!",
-            "Perfect!"
-        };
+        [SerializeField] private string[] phaseMessages = { "Awesome!", "Good!", "Perfect!" };
+        [SerializeField] public float phaseMsgDuration = 2f;
+        [SerializeField] public float tweenDuration = 0.5f;
+        [SerializeField] private Ease tweenEase = Ease.OutBack;
+
+        [Header("Level Complete UI")]
+        [SerializeField] private GameObject levelCompleteUI;
+        [SerializeField] private Button nextButton;
+
+        [Header("Lose UI")]
+        [SerializeField] private GameObject losePanel;
+        [SerializeField] private Button retryButton;
         
-        [Header("Animation Settings")]
-        [SerializeField] private float messageTweenDuration = 0.5f;
-        [SerializeField] private Ease messageTweenEase = Ease.OutBack;
+        private void Awake()
+        {
+            if (Instance && Instance != this) { Destroy(gameObject); return; }
+            Instance = this;
+
+            phaseMessageContainer.SetActive(false);
+            levelCompleteUI.SetActive(false);
+            losePanel.SetActive(false);
+        }
 
         private void OnEnable()
         {
-            BallShooterController.OnBallCountChanged += UpdateBallCountText;
-            LevelManager.OnPhaseIndexChanged += UpdateLevelUI;
-            LevelManager.OnPhaseTransitionText += AnimatePhaseMessage;
+            BallShooterController.OnBallCountChanged += UpdateBallCount;
+            LevelManager.OnPhaseIndexChanged += UpdateLevelProgress;
         }
 
         private void OnDisable()
         {
-            BallShooterController.OnBallCountChanged -= UpdateBallCountText;
-            LevelManager.OnPhaseIndexChanged -= UpdateLevelUI;
-            LevelManager.OnPhaseTransitionText -= AnimatePhaseMessage;
+            BallShooterController.OnBallCountChanged -= UpdateBallCount;
+            LevelManager.OnPhaseIndexChanged -= UpdateLevelProgress;
         }
+        
+        public Button NextButton  => nextButton;
+        public Button RetryButton => retryButton;
 
-        private void UpdateBallCountText(int current, int total)
-        {
-            totalBallCountText.text = $"{current} / {total}";
-        }
+        public int CycleLen => levelSquares.Length - 1;
+        
+        public bool IsOverlayActive =>
+            phaseMessageContainer.activeSelf || levelCompleteUI.activeSelf || losePanel.activeSelf;
 
-        private void UpdateLevelUI(int phaseIndex)
+        private void UpdateBallCount(int cur, int total) => 
+            totalBallCountText.text = $"{cur} / {total}";
+
+        private void UpdateLevelProgress(int phaseIdx)
         {
-            int cycleLen   = levelSquares.Length - 1;       
-            int idxInCycle = phaseIndex % cycleLen;           
-            int currentIdx = idxInCycle + 1;              
-            
+            int idx    = phaseIdx % CycleLen;
+            int curIdx = idx + 1;
+
             for (int i = 0; i < levelSquares.Length; i++)
-            {
-                if (i <  currentIdx)     levelSquares[i].color = stateColors[0];
-                else if (i == currentIdx) levelSquares[i].color = stateColors[1];
-                else                      levelSquares[i].color = stateColors[2]; 
-            }
+                levelSquares[i].color = i < curIdx ? stateColors[0] :
+                                         i == curIdx ? stateColors[1] :
+                                                       stateColors[2];
 
-            int cycleNumber = (phaseIndex / cycleLen) + 1; 
-
-            if (startLevelText)
-                startLevelText.text = cycleNumber.ToString();
-            if (endLevelText)
-                endLevelText.text   = (cycleNumber + 1).ToString();
+            int cycleNo = phaseIdx / CycleLen + 1;
+            startLevelText.text = cycleNo.ToString();
+            endLevelText.text   = (cycleNo + 1).ToString();
         }
-
-        private void AnimatePhaseMessage(int completedPhaseIndex)
+        
+        public bool ShowPhaseMessage(int phaseIdx)
         {
-            int cycleLen   = levelSquares.Length - 1;
-            int idxInCycle = completedPhaseIndex % cycleLen;
+            int idx = phaseIdx % CycleLen;
+            if (idx >= phaseMessages.Length)           
+                return false;                        
 
-            if (idxInCycle < phaseMessages.Length)
-            {
-                // if (levelCompleteUI.activeSelf)
-                //     levelCompleteUI.SetActive(false);
-                phaseMessageContainer.SetActive(true);
-                phaseMessageText.text = phaseMessages[idxInCycle];
-                var rtIn = phaseMessageContainer.transform;
-                rtIn.localScale = Vector3.zero;
-                rtIn.DOScale(Vector3.one, messageTweenDuration)
-                    .SetEase(messageTweenEase);
-                
-                DOVirtual.DelayedCall(2.5f, () =>
+            levelCompleteUI.SetActive(false);
+            losePanel.SetActive(false);
+
+            phaseMessageText.text = phaseMessages[idx];
+            var rt = phaseMessageContainer.transform;
+            phaseMessageContainer.SetActive(true);
+            rt.localScale = Vector3.zero;
+
+            rt.DOScale(Vector3.one, tweenDuration)
+                .SetEase(tweenEase)
+                .OnComplete(() =>
                 {
-                    rtIn
-                        .DOScale(Vector3.zero, messageTweenDuration)
-                        .SetEase(messageTweenEase)
-                        .OnComplete(() => phaseMessageContainer.SetActive(false));
+                    DOVirtual.DelayedCall(phaseMsgDuration, () =>
+                    {
+                        rt.DOScale(Vector3.zero, tweenDuration)
+                            .SetEase(tweenEase)
+                            .OnComplete(() => phaseMessageContainer.SetActive(false));
+                    });
                 });
-            }
-            else
-            {
-                // phaseMessageContainer.SetActive(false);
-                // levelCompleteUI.SetActive(true);
-                // DOVirtual.DelayedCall(1f, () =>
-                // {
-                //     levelCompleteUI.SetActive(false);
-                // });
-            }
+
+            return true;                               
         }
+        
+        public void ShowLevelComplete()
+        {
+            phaseMessageContainer.SetActive(false);
+            losePanel.SetActive(false);
+            levelCompleteUI.SetActive(true);
+        }
+        public void HideLevelComplete() => levelCompleteUI.SetActive(false);
+        
+        public void ShowLosePanel()
+        {
+            phaseMessageContainer.SetActive(false);
+            levelCompleteUI.SetActive(false);
+            losePanel.SetActive(true);
+        }
+        public void HideLosePanel() => losePanel.SetActive(false);
     }
 }

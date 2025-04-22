@@ -12,7 +12,10 @@ namespace Gameplay
         [Header("Settings")]
         [SerializeField] private float rotationDuration = 0.5f;
         [SerializeField] private float elevationAngle = 15f;
+        
+        private Quaternion _initialRotation;
 
+        private void Awake() => _initialRotation = cannonTransform.rotation;
         private void OnEnable() => BallShooterController.OnCannonAim += Aim;
         private void OnDisable() => BallShooterController.OnCannonAim -= Aim;
 
@@ -29,6 +32,12 @@ namespace Gameplay
             cannonTransform
                 .DORotateQuaternion(finalRot, rotationDuration)
                 .SetEase(Ease.OutSine);
+        }
+        
+        public void ResetCannon()
+        {
+            cannonTransform.DOKill();
+            cannonTransform.rotation = _initialRotation;
         }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Manager;
 
 namespace Gameplay
 {
@@ -19,8 +18,13 @@ namespace Gameplay
 
         public void MarkAsFallen()
         {
-            ActiveCount--;
+            ActiveCount = Mathf.Max(0, ActiveCount - 1);
             BlockFallen?.Invoke();
+        }
+
+        private void OnDestroy()
+        {
+            ActiveCount = Mathf.Max(0, ActiveCount - 1);
         }
     }
 }

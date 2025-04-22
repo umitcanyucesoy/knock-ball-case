@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using Gameplay;
 using UnityEngine;
-using Object = System.Object;
 
 namespace Manager
 {
@@ -13,23 +9,39 @@ namespace Manager
         [Header("Elements")]
         [SerializeField] private BallShooterController shooterController;
         [SerializeField] private LevelSpawner levelSpawner;
+        [SerializeField] private CannonAnimator cannonAnimator;
         [SerializeField] private float waitAfterBalls = 2f;
 
-        private int _blocksRemaining;
-        private bool _levelEnded;
+        private int   _blocksRemaining;
+        private bool  _levelEnded;
         private float _ballEndTimer;
-        private int _phaseIndex;
-        
-        public static event Action<int> OnPhaseIndexChanged;
-        public static event Action<int> OnPhaseTransitionText;
+        private int   _phaseIndex;
+
+        public static event System.Action<int> OnPhaseIndexChanged;
         
         private void Awake()
         {
+            _blocksRemaining = 0;
+
             PhysicalBlock.BlockSpawned += OnBlockSpawned;
-            PhysicalBlock.BlockFallen += OnBlockFallen;
-            
-            _levelEnded = false;
-            _blocksRemaining = PhysicalBlock.ActiveCount;
+            PhysicalBlock.BlockFallen  += OnBlockFallen;
+        }
+        
+        private void OnDestroy()
+        {
+            PhysicalBlock.BlockSpawned -= OnBlockSpawned;
+            PhysicalBlock.BlockFallen  -= OnBlockFallen;
+        }
+        
+        private void OnBlockSpawned()  => _blocksRemaining++;
+        
+        private void OnBlockFallen()
+        {
+            if (_levelEnded) return;
+
+            _blocksRemaining--;
+            if (_blocksRemaining <= 0)
+                _ = HandlePhaseCompleteAsync();
         }
 
         private void Start()
@@ -37,85 +49,109 @@ namespace Manager
             _phaseIndex = 0;
             levelSpawner.SpawnFirst();
             OnPhaseIndexChanged?.Invoke(_phaseIndex);
-            
-            int totalBalls = levelSpawner.GetCurrentTotalBallCount();
-            shooterController.SetTotalBallCount(totalBalls);
-        }
 
-        private void OnBlockSpawned()
-        {
-            _blocksRemaining++;
-        }
-
-        private void OnBlockFallen()
-        {
-            if (_levelEnded) return;
-
-            _blocksRemaining--;
-
-            if (_blocksRemaining <= 0)
-                HandleWin().Forget();
+            shooterController.SetTotalBallCount(
+                levelSpawner.GetCurrentTotalBallCount());
         }
 
         private void Update()
         {
-            ManageLevel();
-        }
-
-        private void ManageLevel()
-        {
             if (_levelEnded) return;
 
             if (shooterController.GetRemainingBallCount() <= 0)
-            { 
+            {
                 _ballEndTimer += Time.deltaTime;
                 if (_ballEndTimer >= waitAfterBalls)
-                    HandleLose();
+                    _ = HandleLoseAsync();
             }
             else
                 _ballEndTimer = 0f;
         }
-
-        private async UniTask HandleWin()
+        
+        private async UniTask HandlePhaseCompleteAsync()
         {
             _levelEnded = true;
-            
-            OnPhaseTransitionText?.Invoke(_phaseIndex);
-            
-            await UniTask.Delay(TimeSpan.FromSeconds(3f));
-            
+
+            bool messageShown = UIManager.Instance.ShowPhaseMessage(_phaseIndex);
+
+            if (messageShown)
+            {
+                float wait = UIManager.Instance.tweenDuration * 2f
+                             + UIManager.Instance.phaseMsgDuration;
+                await UniTask.Delay(System.TimeSpan.FromSeconds(wait));
+            }
+
+            int idx = _phaseIndex % UIManager.Instance.CycleLen;
+
+            if (idx < UIManager.Instance.CycleLen - 1)       
+            {
+                await ContinueToNextPhaseAsync();
+            }
+            else                                           
+            {
+                UIManager.Instance.ShowLevelComplete();
+
+                var tcs = new UniTaskCompletionSource();
+                void OnNext() => tcs.TrySetResult();
+                UIManager.Instance.NextButton.onClick.AddListener(OnNext);
+                await tcs.Task;
+                UIManager.Instance.NextButton.onClick.RemoveListener(OnNext);
+                UIManager.Instance.HideLevelComplete();
+
+                await ContinueToNextPhaseAsync();
+            }
+        }
+
+        
+        private async UniTask HandleLoseAsync()
+        {
+            _levelEnded = true;
+            UIManager.Instance.ShowLosePanel();
+
+            var tcs = new UniTaskCompletionSource();
+            void OnRetry() => tcs.TrySetResult();
+            UIManager.Instance.RetryButton.onClick.AddListener(OnRetry);
+            await tcs.Task;
+            UIManager.Instance.RetryButton.onClick.RemoveListener(OnRetry);
+            UIManager.Instance.HideLosePanel();
+
             ObjectPooling.Instance.ReturnAllActiveObjects();
-            
+
+            _blocksRemaining = 0;
+
+            levelSpawner.RespawnCurrent();
+
+            shooterController.SetTotalBallCount(
+                levelSpawner.GetCurrentTotalBallCount());
+            _ballEndTimer = 0f;
+            _levelEnded   = false;
+
+            cannonAnimator.ResetCannon();
+        }
+        
+        private async UniTask ContinueToNextPhaseAsync()
+        {
+            ObjectPooling.Instance.ReturnAllActiveObjects();
+
             bool hasNext = levelSpawner.SpawnNext();
             if (hasNext)
             {
                 _phaseIndex++;
                 OnPhaseIndexChanged?.Invoke(_phaseIndex);
+                shooterController.SetTotalBallCount(
+                    levelSpawner.GetCurrentTotalBallCount());
+
+                _blocksRemaining = PhysicalBlock.ActiveCount;
+                _ballEndTimer    = 0f;
+                _levelEnded      = false;
                 
-                PrepareNextPhase();
+                cannonAnimator.ResetCannon();
+            }
+            else
+            {
+                Debug.Log("Case Completed!");
             }
         }
-
-        private void HandleLose()
-        {
-            _levelEnded = true;
-            
-            OnPhaseTransitionText?.Invoke(_phaseIndex);
-            
-            ObjectPooling.Instance.ReturnAllActiveObjects();
-            
-            Debug.Log("💥 LEVEL FAILED!");
-        }
-
-        private void PrepareNextPhase()
-        {
-            _blocksRemaining = PhysicalBlock.ActiveCount;
-
-            int totalBalls = levelSpawner.GetCurrentTotalBallCount();
-            shooterController.SetTotalBallCount(totalBalls);
-            
-            _ballEndTimer = 0f;
-            _levelEnded   = false;
-        }
+        
     }
 }
