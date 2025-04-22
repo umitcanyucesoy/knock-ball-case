@@ -120,6 +120,7 @@ namespace Manager
             phaseMessageContainer.SetActive(false);
             losePanel.SetActive(false);
             levelCompleteUI.SetActive(true);
+            SfxManager.Instance?.Play(SfxManager.SfxType.Win);
         }
         public void HideLevelComplete() => levelCompleteUI.SetActive(false);
         
@@ -128,6 +129,7 @@ namespace Manager
             phaseMessageContainer.SetActive(false);
             levelCompleteUI.SetActive(false);
             losePanel.SetActive(true);
+            SfxManager.Instance?.Play(SfxManager.SfxType.Lose);
         }
         public void HideLosePanel() => losePanel.SetActive(false);
     }

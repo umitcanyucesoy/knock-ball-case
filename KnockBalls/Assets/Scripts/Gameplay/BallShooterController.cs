@@ -70,6 +70,7 @@ namespace Gameplay
 
             _currentBallCount--;
             OnBallCountChanged?.Invoke(_currentBallCount, _totalBallCount);
+            SfxManager.Instance?.Play(SfxManager.SfxType.Shoot);
         }
         
         public int GetRemainingBallCount()

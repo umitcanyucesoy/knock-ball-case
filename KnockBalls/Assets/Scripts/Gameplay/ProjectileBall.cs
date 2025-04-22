@@ -32,6 +32,16 @@ namespace Gameplay
             _rb.velocity        = initialVelocity;
             _rb.angularVelocity = Random.insideUnitSphere * 8f;
         }
+        
+        private void OnCollisionEnter(Collision col)
+        {
+            if (col.collider.GetComponent<PhysicalBlock>())
+            {
+                ContactPoint cp = col.GetContact(0);
+                VfxManager.Instance?.Play(VfxManager.VfxType.Hit, cp.point, Quaternion.LookRotation(cp.normal));
+                SfxManager.Instance?.Play(SfxManager.SfxType.Hit);
+            }
+        }
 
         public void ReturnToPool()
         {
