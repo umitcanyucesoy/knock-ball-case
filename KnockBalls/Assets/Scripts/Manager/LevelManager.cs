@@ -19,8 +19,12 @@ namespace Manager
 
         public static event System.Action<int> OnPhaseIndexChanged;
         
+        public static LevelManager Instance { get; private set; }
         private void Awake()
         {
+            if (!Instance)
+                Instance = this;
+            
             _blocksRemaining = 0;
 
             PhysicalBlock.BlockSpawned += OnBlockSpawned;
@@ -71,9 +75,8 @@ namespace Manager
         private async UniTask HandlePhaseCompleteAsync()
         {
             _levelEnded = true;
-
+            
             bool messageShown = UIManager.Instance.ShowPhaseMessage(_phaseIndex);
-
             if (messageShown)
             {
                 float wait = UIManager.Instance.tweenDuration * 2f
@@ -101,7 +104,6 @@ namespace Manager
                 await ContinueToNextPhaseAsync();
             }
         }
-
         
         private async UniTask HandleLoseAsync()
         {
@@ -153,5 +155,18 @@ namespace Manager
             }
         }
         
+        public void ResetCurrentPhase()
+        {
+            _levelEnded = false;
+            ObjectPooling.Instance.ReturnAllActiveObjects();
+            _blocksRemaining = 0;
+
+            levelSpawner.RespawnCurrent();
+            shooterController.SetTotalBallCount(
+                levelSpawner.GetCurrentTotalBallCount());
+
+            _ballEndTimer = 0f;
+            cannonAnimator.ResetCannon();
+        }
     }
 }

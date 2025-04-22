@@ -38,6 +38,13 @@ namespace Manager
         [SerializeField] private GameObject losePanel;
         [SerializeField] private Button retryButton;
         
+        [Header("Settings UI")]
+        [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private Button     openSettingsButton;
+        [SerializeField] private Button     settingsRetryButton;
+        [SerializeField] private Button     settingsQuitButton;
+        [SerializeField] private Button     settingsCloseButton;
+        
         private void Awake()
         {
             if (Instance && Instance != this) { Destroy(gameObject); return; }
@@ -46,18 +53,32 @@ namespace Manager
             phaseMessageContainer.SetActive(false);
             levelCompleteUI.SetActive(false);
             losePanel.SetActive(false);
+            phaseMessageContainer.SetActive(false);
+            levelCompleteUI.SetActive(false);
+            losePanel.SetActive(false);
+            settingsPanel.SetActive(false);
         }
 
         private void OnEnable()
         {
             BallShooterController.OnBallCountChanged += UpdateBallCount;
             LevelManager.OnPhaseIndexChanged += UpdateLevelProgress;
+            
+            if (openSettingsButton) openSettingsButton.onClick.AddListener(ShowSettings);
+            if (settingsRetryButton) settingsRetryButton.onClick.AddListener(OnSettingsRetry);
+            if (settingsQuitButton) settingsQuitButton.onClick.AddListener(OnSettingsQuit);
+            if (settingsCloseButton) settingsCloseButton.onClick.AddListener(HideSettings);
         }
 
         private void OnDisable()
         {
             BallShooterController.OnBallCountChanged -= UpdateBallCount;
             LevelManager.OnPhaseIndexChanged -= UpdateLevelProgress;
+            
+            if (openSettingsButton) openSettingsButton   .onClick.RemoveListener(ShowSettings);
+            if (settingsRetryButton) settingsRetryButton  .onClick.RemoveListener(OnSettingsRetry);
+            if (settingsQuitButton) settingsQuitButton   .onClick.RemoveListener(OnSettingsQuit);
+            if (settingsCloseButton) settingsCloseButton  .onClick.RemoveListener(HideSettings);
         }
         
         public Button NextButton  => nextButton;
@@ -65,9 +86,6 @@ namespace Manager
 
         public int CycleLen => levelSquares.Length - 1;
         
-        public bool IsOverlayActive =>
-            phaseMessageContainer.activeSelf || levelCompleteUI.activeSelf || losePanel.activeSelf;
-
         private void UpdateBallCount(int cur, int total) => 
             totalBallCountText.text = $"{cur} / {total}";
 
@@ -122,8 +140,7 @@ namespace Manager
             levelCompleteUI.SetActive(true);
             SfxManager.Instance?.Play(SfxManager.SfxType.Win);
         }
-        public void HideLevelComplete() => levelCompleteUI.SetActive(false);
-        
+
         public void ShowLosePanel()
         {
             phaseMessageContainer.SetActive(false);
@@ -131,6 +148,25 @@ namespace Manager
             losePanel.SetActive(true);
             SfxManager.Instance?.Play(SfxManager.SfxType.Lose);
         }
+        
+        public void HideLevelComplete() => levelCompleteUI.SetActive(false);
         public void HideLosePanel() => losePanel.SetActive(false);
+        private void ShowSettings() => settingsPanel.SetActive(true);
+        private void HideSettings() => settingsPanel.SetActive(false);
+        private void OnSettingsRetry() { HideSettings(); LevelManager.Instance?.ResetCurrentPhase(); }
+        
+        private void OnSettingsQuit()
+        {
+            Application.Quit();
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            #endif
+        }
+        
+        public bool IsUIOpen =>
+            phaseMessageContainer.activeSelf ||
+            levelCompleteUI       .activeSelf ||
+            losePanel             .activeSelf ||
+            settingsPanel         .activeSelf;
     }
 }

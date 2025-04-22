@@ -41,7 +41,8 @@ namespace Gameplay
 
         private void HandleInput()
         {
-            if (UIManager.Instance && UIManager.Instance.IsOverlayActive) return;
+            if (UIManager.Instance && UIManager.Instance.IsUIOpen)
+                return;
             
             if (Input.GetMouseButtonDown(0) && _currentBallCount > 0)
             {
