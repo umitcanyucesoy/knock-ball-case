@@ -116,6 +116,8 @@ namespace Manager
             await tcs.Task;
             UIManager.Instance.RetryButton.onClick.RemoveListener(OnRetry);
             UIManager.Instance.HideLosePanel();
+            
+            ScoreManager.Instance?.ResetScore();
 
             ObjectPooling.Instance.ReturnAllActiveObjects();
 
@@ -133,6 +135,7 @@ namespace Manager
         
         private async UniTask ContinueToNextPhaseAsync()
         {
+            ScoreManager.Instance?.ResetScore();
             ObjectPooling.Instance.ReturnAllActiveObjects();
 
             bool hasNext = levelSpawner.SpawnNext();
@@ -151,7 +154,17 @@ namespace Manager
             }
             else
             {
-                Debug.Log("Case Completed!");
+                levelSpawner.SpawnFirst();
+
+                _phaseIndex = 0;
+                OnPhaseIndexChanged?.Invoke(_phaseIndex);
+
+                shooterController.SetTotalBallCount(
+                    levelSpawner.GetCurrentTotalBallCount());
+                _blocksRemaining = PhysicalBlock.ActiveCount;
+                _ballEndTimer    = 0f;
+                _levelEnded      = false;
+                cannonAnimator.ResetCannon();
             }
         }
         

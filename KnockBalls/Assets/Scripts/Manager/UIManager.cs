@@ -153,7 +153,7 @@ namespace Manager
         public void HideLosePanel() => losePanel.SetActive(false);
         private void ShowSettings() => settingsPanel.SetActive(true);
         private void HideSettings() => settingsPanel.SetActive(false);
-        private void OnSettingsRetry() { HideSettings(); LevelManager.Instance?.ResetCurrentPhase(); }
+        private void OnSettingsRetry() { HideSettings(); LevelManager.Instance?.ResetCurrentPhase(); ScoreManager.Instance?.ResetScore(); }
         
         private void OnSettingsQuit()
         {

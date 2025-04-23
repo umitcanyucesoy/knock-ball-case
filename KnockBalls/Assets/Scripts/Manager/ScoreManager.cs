@@ -42,7 +42,7 @@ namespace Manager
             if (amount == 1)
             {
                 _consecutiveOnes++;
-                if (_consecutiveOnes >= 3)
+                if (_consecutiveOnes >= 7)
                 {
                     int bonus = 5;
                     _score += bonus;
@@ -81,6 +81,14 @@ namespace Manager
             go.DOFade(0f, floatDuration)
               .SetDelay(displayTime)
               .OnComplete(() => Destroy(go.gameObject));
+        }
+        
+        public void ResetScore()
+        {
+            _score = 0;
+            _consecutiveOnes = 0;
+            if (scoreText)
+                scoreText.text = "0";
         }
     }
 }
